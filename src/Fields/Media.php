@@ -254,14 +254,17 @@ class Media extends Field
         if ($collectionName === 'ComputedField') {
             $collectionName = call_user_func($this->computedCallback, $resource);
         }
+        
+        try {
+            $this->value = $resource->getMedia($collectionName)
+                ->map(function (\Spatie\MediaLibrary\MediaCollections\Models\Media $media) {
+                    return array_merge($this->serializeMedia($media), ['__media_urls__' => $this->getConversionUrls($media)]);
+                })->values();
 
-        $this->value = $resource->getMedia($collectionName)
-            ->map(function (\Spatie\MediaLibrary\MediaCollections\Models\Media $media) {
-                return array_merge($this->serializeMedia($media), ['__media_urls__' => $this->getConversionUrls($media)]);
-            })->values();
-
-        if ($collectionName) {
-            $this->checkCollectionIsMultiple($resource, $collectionName);
+            if ($collectionName) {
+                $this->checkCollectionIsMultiple($resource, $collectionName);
+            }
+        } catch (\Exception $e) {
         }
     }
 
